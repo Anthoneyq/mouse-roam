@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; media-src 'self' blob:; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'"
+    />
+    <title>Edge Switch</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <main id="setup">
+      <header>
+        <a class="brand" href="#"><span class="mark">↗</span> Edge Switch</a
+        ><span class="badge">Early access · 0.1</span>
+      </header>
+      <section class="intro">
+        <p class="eyebrow">TWO COMPUTERS. ONE WORKSPACE.</p>
+        <h1>Just move your mouse.</h1>
+        <p class="lead">
+          Keep your keyboard. Keep your flow.<br />Bring your other computer one
+          screen edge away.
+        </p>
+      </section>
+      <div id="notice" class="notice" role="status" hidden></div>
+      <section class="workspace" aria-label="Your connection">
+        <div class="computer">
+          <div class="screen"><span id="local-icon">⌘</span></div>
+          <span>This computer</span>
+        </div>
+        <div class="bridge">
+          <span class="bridge-line">········→········</span
+          ><span id="connection-label">Let’s connect</span>
+        </div>
+        <div class="computer">
+          <div class="screen other"><span id="remote-icon">+</span></div>
+          <span id="peer-name">Your other computer</span>
+        </div>
+      </section>
+      <section id="pairing" class="pairing" hidden aria-label="Confirm pairing">
+        <p class="eyebrow">CHECK BOTH SCREENS</p>
+        <h2 id="pair-title">Is this the same code?</h2>
+        <p>Only continue if these numbers match on your other computer.</p>
+        <div id="pair-code" class="code"></div>
+        <div class="actions">
+          <button id="confirm">The codes match</button
+          ><button id="cancel" class="secondary">Cancel</button>
+        </div>
+        <p id="pair-wait" class="muted" hidden>
+          Waiting for confirmation on the other computer…
+        </p>
+      </section>
+      <section class="steps">
+        <article class="step">
+          <div class="step-number">1</div>
+          <div class="step-body">
+            <h2>Choose how you’ll use this computer</h2>
+            <div class="role-options">
+              <label class="choice"
+                ><input type="radio" name="role" value="main" checked /><span
+                  ><strong>Use this keyboard and mouse</strong
+                  ><small
+                    >I’ll switch from here to the other computer.</small
+                  ></span
+                ></label
+              ><label class="choice"
+                ><input type="radio" name="role" value="other" /><span
+                  ><strong>Control this computer</strong
+                  ><small
+                    >I’ll use the other computer’s keyboard and mouse.</small
+                  ></span
+                ></label
+              >
+            </div>
+          </div>
+        </article>
+        <article class="step">
+          <div class="step-number">2</div>
+          <div class="step-body">
+            <h2>Connect your other computer</h2>
+            <p>Open Edge Switch on both computers, on the same home network.</p>
+            <div id="nearby" class="nearby">
+              <span class="searching">Looking for your other computer…</span>
+            </div>
+            <div id="paired-actions" hidden>
+              <span class="paired-tag">✓ Paired</span
+              ><button id="forget" class="text-button">Forget computer</button>
+            </div>
+          </div>
+        </article>
+        <article class="step" id="video-step">
+          <div class="step-number">3</div>
+          <div class="step-body">
+            <h2>Choose what happens at the edge</h2>
+            <label class="check"
+              ><input id="video-enabled" type="checkbox" checked /><span
+                >Show the other computer on this screen</span
+              ></label
+            >
+            <div id="capture-options">
+              <p class="wiring">
+                Other computer <b>→ HDMI →</b> capture card <b>→ USB →</b> this
+                computer
+              </p>
+              <p class="muted">
+                A capture card is required. An ordinary HDMI cable alone won’t
+                work.
+              </p>
+              <div class="capture-row">
+                <button id="find-camera" class="secondary">
+                  Find capture card</button
+                ><label class="sr-only" for="camera">Capture card</label
+                ><select id="camera">
+                  <option value="">Choose your capture card</option></select
+                ><button id="test-video" class="text-button">
+                  Check picture
+                </button>
+              </div>
+              <p id="camera-status" class="muted">
+                Choose the capture card, not your webcam.
+              </p>
+            </div>
+            <div class="edge-row">
+              <label for="side">Switch at the</label
+              ><select id="side">
+                <option value="left">Left edge</option>
+                <option value="right">Right edge</option>
+                <option value="top">Top edge</option>
+                <option value="bottom">Bottom edge</option></select
+              ><span class="muted">Return at the opposite edge.</span>
+            </div>
+          </div>
+        </article>
+      </section>
+      <section class="finish">
+        <div>
+          <label class="check"
+            ><input id="login" type="checkbox" /><span
+              >Open when I sign in</span
+            ></label
+          >
+          <p class="muted">
+            Return any time: left Control + Alt / Option + Shift.
+          </p>
+        </div>
+        <button id="start" disabled>Connect a computer first</button>
+      </section>
+      <footer>
+        <span id="engine-status">Starting…</span>
+        <div>
+          <button id="permissions" class="text-button">Check permissions</button
+          ><button id="help" class="text-button">Connection help</button>
+        </div>
+      </footer>
+      <p class="testing-note">
+        Preview release. Windows and Omarchy hardware checks are still required
+        before general release.
+      </p>
+    </main>
+    <section id="video-view" hidden>
+      <video id="capture-video" autoplay muted playsinline></video>
+      <div id="video-error">Waiting for the capture card…</div>
+    </section>
+    <script src="renderer.js"></script>
+  </body>
+</html>

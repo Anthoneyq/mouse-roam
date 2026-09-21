@@ -1,0 +1,129 @@
+diff --git a/lan-mouse-ipc/src/lib.rs b/lan-mouse-ipc/src/lib.rs
+index 17e9799..748bd20 100644
+--- a/lan-mouse-ipc/src/lib.rs
++++ b/lan-mouse-ipc/src/lib.rs
+@@ -186,6 +186,8 @@ pub struct ClientState {
+ 
+ #[derive(Debug, Clone, Serialize, Deserialize)]
+ pub enum FrontendEvent {
++    ControlStarted(ClientHandle),
++    ControlReturned,
+     /// a client was created
+     Created(ClientHandle, ClientConfig, ClientState),
+     /// no such client
+@@ -227,6 +229,7 @@ pub enum FrontendEvent {
+ 
+ #[derive(Debug, Eq, PartialEq, Clone, Serialize, Deserialize)]
+ pub enum FrontendRequest {
++    ReleaseInput,
+     /// activate/deactivate client
+     Activate(ClientHandle, bool),
+     /// add a new client
+@@ -292,6 +295,7 @@ pub enum SocketPathError {
+ 
+ #[cfg(all(unix, not(target_os = "macos")))]
+ pub fn default_socket_path() -> Result<PathBuf, SocketPathError> {
++    if let Ok(path) = env::var("EDGE_SWITCH_SOCKET") { return Ok(PathBuf::from(path)); }
+     let xdg_runtime_dir =
+         env::var("XDG_RUNTIME_DIR").map_err(SocketPathError::XdgRuntimeDirNotFound)?;
+     Ok(Path::new(xdg_runtime_dir.as_str()).join(LAN_MOUSE_SOCKET_NAME))
+@@ -299,6 +303,7 @@ pub fn default_socket_path() -> Result<PathBuf, SocketPathError> {
+ 
+ #[cfg(all(unix, target_os = "macos"))]
+ pub fn default_socket_path() -> Result<PathBuf, SocketPathError> {
++    if let Ok(path) = env::var("EDGE_SWITCH_SOCKET") { return Ok(PathBuf::from(path)); }
+     let home = env::var("HOME").map_err(SocketPathError::HomeDirNotFound)?;
+     Ok(Path::new(home.as_str())
+         .join("Library")
+diff --git a/lan-mouse-ipc/src/listen.rs b/lan-mouse-ipc/src/listen.rs
+index 8e26089..93eab8a 100644
+--- a/lan-mouse-ipc/src/listen.rs
++++ b/lan-mouse-ipc/src/listen.rs
+@@ -71,7 +71,7 @@ impl AsyncFrontendListener {
+         };
+ 
+         #[cfg(windows)]
+-        let listener = match TcpListener::bind("127.0.0.1:5252").await {
++        let listener = match TcpListener::bind(format!("127.0.0.1:{}", std::env::var("EDGE_SWITCH_IPC_PORT").unwrap_or_else(|_| "5252".into()))).await {
+             Ok(ls) => ls,
+             // some other lan-mouse instance has bound the socket in the meantime
+             Err(e) if e.kind() == ErrorKind::AddrInUse => {
+diff --git a/src/capture.rs b/src/capture.rs
+index 8f739bd..c7bdf9d 100644
+--- a/src/capture.rs
++++ b/src/capture.rs
+@@ -24,6 +24,8 @@ pub(crate) struct Capture {
+ }
+ 
+ pub(crate) enum ICaptureEvent {
++    ControlStarted(u64),
++    ControlReturned,
+     /// a client was entered
+     CaptureBegin(CaptureHandle),
+     /// capture disabled
+@@ -283,6 +285,9 @@ impl CaptureTask {
+                         // connection acknowlegded => set state to Sending
+                         ProtoEvent::Ack(_) => {
+                             log::info!("client {handle} acknowledged the connection!");
++                            if self.state != State::Sending && self.active_client == Some(handle) {
++                                let _ = self.event_tx.send(ICaptureEvent::ControlStarted(handle));
++                            }
+                             self.state = State::Sending;
+                         }
+                         // client disconnected
+@@ -368,7 +373,7 @@ impl CaptureTask {
+         if let Err(e) = self.conn.send(event, handle).await {
+             const DUR: Duration = Duration::from_millis(500);
+             debounce!(PREV_LOG, DUR, log::warn!("releasing capture: {e}"));
+-            capture.release().await?;
++            self.release_capture(capture).await?;
+         }
+         Ok(())
+     }
+@@ -416,7 +421,9 @@ impl CaptureTask {
+                 log::warn!("failed to send Leave to client {handle}: {e}");
+             }
+         }
+-        capture.release().await
++        let result = capture.release().await;
++        let _ = self.event_tx.send(ICaptureEvent::ControlReturned);
++        result
+     }
+ }
+ 
+diff --git a/src/config.rs b/src/config.rs
+index f876b6d..ab3278e 100644
+--- a/src/config.rs
++++ b/src/config.rs
+@@ -496,9 +496,7 @@ impl Config {
+ 
+     /// set configured clients
+     pub fn set_clients(&mut self, clients: Vec<ConfigClient>) {
+-        if clients.is_empty() {
+-            return;
+-        }
++
+         if self.config_toml.is_none() {
+             self.config_toml = Some(Default::default());
+         }
+diff --git a/src/service.rs b/src/service.rs
+index bf782c7..31e1a70 100644
+--- a/src/service.rs
++++ b/src/service.rs
+@@ -169,6 +169,7 @@ impl Service {
+             Err(e) => return log::error!("error receiving request: {e}"),
+         };
+         match request {
++            FrontendRequest::ReleaseInput => self.capture.release(),
+             FrontendRequest::Activate(handle, active) => {
+                 self.set_client_active(handle, active);
+                 self.save_config();
+@@ -332,6 +333,8 @@ impl Service {
+ 
+     fn handle_capture_event(&mut self, event: ICaptureEvent) {
+         match event {
++            ICaptureEvent::ControlStarted(handle) => self.notify_frontend(FrontendEvent::ControlStarted(handle)),
++            ICaptureEvent::ControlReturned => self.notify_frontend(FrontendEvent::ControlReturned),
+             ICaptureEvent::CaptureBegin(handle) => {
+                 // we entered the capture zone for an incoming connection
+                 // => notify it that its capture should be released

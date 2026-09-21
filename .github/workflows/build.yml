@@ -1,0 +1,43 @@
+name: Build test installers
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, macos-15, macos-15-intel, ubuntu-24.04]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Linux build dependencies
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y libwayland-dev libxkbcommon-dev pkg-config
+      - run: npm ci
+      - run: npm run engine
+      - run: npm run check
+      - run: npm test
+      - name: Package prototype
+        run: npm run package
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: "false"
+      - name: Preserve corresponding engine source
+        shell: bash
+        run: tar --exclude=.git --exclude=target -czf dist/lan-mouse-corresponding-source.tar.gz -C .cache lan-mouse
+      - uses: actions/upload-artifact@v4
+        with:
+          name: edge-switch-${{ matrix.os }}
+          path: |
+            dist/*.exe
+            dist/*.dmg
+            dist/*.zip
+            dist/*.AppImage
+            dist/*.tar.gz
+          retention-days: 14
