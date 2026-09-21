@@ -12,9 +12,9 @@ Mouse Roam is a free, open-source software KVM (keyboard, video, mouse) switch. 
 
 | Computer                                             | Status                                                          |
 | ---------------------------------------------------- | --------------------------------------------------------------- |
-| Mac (Apple Silicon and Intel)                        | App builds and runs. Switching between computers is in testing. |
+| Mac (Apple Silicon )                                 | App builds and runs.                                            |
 | Windows 10 and 11                                    | (testing)                                                       |
-| Omarchy                                              | (testing)                                                       |
+| Omarchy                                              | App builds and runs.                                            |
 | Other Linux with Hyprland or another wlroots desktop | (testing)                                                       |
 
 Each platform is meant to work as either the main computer or the computer being controlled. This table is updated as each pair passes [hardware testing](docs/VERIFICATION.md).
