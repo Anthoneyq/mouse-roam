@@ -82,7 +82,7 @@ function createWindow(overlay = false) {
     minHeight: overlay ? 300 : 650,
     show: false,
     backgroundColor: overlay ? "#000000" : "#f5f5f0",
-    title: overlay ? "Other computer — Edge Switch" : "Edge Switch",
+    title: overlay ? "Other computer — Mouse Roam" : "Mouse Roam",
     frame: !overlay,
     focusable: !overlay,
     skipTaskbar: overlay,
@@ -236,7 +236,7 @@ function setupIPC() {
       title: "Connection help",
       message: "Keep both apps open on the same home network.",
       detail:
-        "Allow Edge Switch through the firewall on your private network. Guest Wi-Fi can block nearby computers. For video, connect the other computer’s HDMI output to the capture card, then connect the card’s USB cable to this computer.\n\nReturn control any time: hold the left Control + Alt (Option on Mac) + Shift keys together.\n\nIf macOS asks for Accessibility or Input Monitoring, enable the bundled input service as shown by the system, then reopen Edge Switch.",
+        "Allow Mouse Roam through the firewall on your private network. Guest Wi-Fi can block nearby computers. For video, connect the other computer’s HDMI output to the capture card, then connect the card’s USB cable to this computer.\n\nReturn control any time: hold the left Control + Alt (Option on Mac) + Shift keys together.\n\nIf macOS asks for Accessibility or Input Monitoring, enable the bundled input service as shown by the system, then reopen Mouse Roam.",
     }),
   );
   handle("preview-video", () => {
@@ -269,14 +269,14 @@ function setLogin(enabled) {
   }
   const directory = path.join(app.getPath("home"), ".config", "autostart");
   fs.mkdirSync(directory, { recursive: true });
-  const file = path.join(directory, "edge-switch.desktop");
+  const file = path.join(directory, "mouse-roam.desktop");
   if (enabled) {
     const executable = process.env.APPIMAGE || process.execPath;
     const quoted =
       '"' + executable.replace(/[\\"`$]/g, "\\$&").replace(/%/g, "%%") + '"';
     fs.writeFileSync(
       file,
-      `[Desktop Entry]\nType=Application\nName=Edge Switch\nExec=${quoted}\nTerminal=false\n`,
+      `[Desktop Entry]\nType=Application\nName=Mouse Roam\nExec=${quoted}\nTerminal=false\n`,
     );
   } else if (fs.existsSync(file)) fs.unlinkSync(file);
 }
@@ -286,11 +286,11 @@ function createTray() {
     .resize({ width: 22, height: 22 });
   icon.setTemplateImage(true);
   tray = new Tray(icon);
-  tray.setToolTip("Edge Switch");
+  tray.setToolTip("Mouse Roam");
   tray.setContextMenu(
     Menu.buildFromTemplate([
       {
-        label: "Open Edge Switch",
+        label: "Open Mouse Roam",
         click: () => {
           window.show();
           window.focus();
@@ -411,7 +411,7 @@ app.whenReady().then(async () => {
   } catch (error) {
     tell(error.message);
     if (!window)
-      dialog.showErrorBox("Edge Switch could not open", error.message);
+      dialog.showErrorBox("Mouse Roam could not open", error.message);
   }
 });
 app.on("before-quit", () => {

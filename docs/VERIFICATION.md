@@ -16,7 +16,7 @@ A nontechnical user must be able to install, pair, choose a picture, switch, and
 
 - Current Mac source: input engine compiled; all seven tests passed; the development interface and packaged Apple Silicon app passed the Electron UI check. The final screen was visually inspected, including “Main computer (server)” wording.
 - The Apple Silicon DMG and ZIP were built locally. They use ad-hoc signing and are not notarized consumer releases.
-- [Initial cross-platform workflow](https://github.com/Anthoneyq/edge-switch/actions/runs/35628906963) tests commit `166085b`. Later local changes pin the input receiver’s certificate, prevent early edge activation, and clarify the server wording. That initial workflow is not evidence that the latest commit has passed on every platform.
+- [Initial cross-platform workflow](https://github.com/Anthoneyq/mouse-roam/actions/runs/35628906963) tests commit `166085b`. Later local changes pin the input receiver’s certificate, prevent early edge activation, and clarify the server wording. That initial workflow is not evidence that the latest commit has passed on every platform.
 
 ## Hardware release gates — pending
 

@@ -1,5 +1,5 @@
 "use strict";
-const api = window.edgeSwitch;
+const api = window.mouseRoam;
 const $ = (id) => document.getElementById(id);
 let current,
   initialized = false,
@@ -204,7 +204,7 @@ async function video(value) {
   api.cameraReady(false);
   $("video-error").hidden = false;
   if (!value.enabled || !value.camera) {
-    $("video-error").textContent = "Choose a capture card in Edge Switch.";
+    $("video-error").textContent = "Choose a capture card in Mouse Roam.";
     return;
   }
   try {
@@ -264,4 +264,4 @@ if (api) {
     $("permissions").onclick = () => perform(() => call("permissions"));
     $("help").onclick = () => perform(() => call("help"));
   }
-} else error("Open this screen in the Edge Switch app.");
+} else error("Open this screen in the Mouse Roam app.");

@@ -40,7 +40,7 @@ class Peers extends EventEmitter {
     } catch (e) {
       if (e.code !== "ENOENT") throw e;
       this.keys = await selfsigned.generate(
-        [{ name: "commonName", value: "Edge Switch" }],
+        [{ name: "commonName", value: "Mouse Roam" }],
         { keySize: 2048, algorithm: "sha256", days: 3650 },
       );
       fs.writeFileSync(file, JSON.stringify(this.keys), { mode: 0o600 });
@@ -75,8 +75,8 @@ class Peers extends EventEmitter {
         ),
       );
       this.service = this.bonjour.publish({
-        name: `Edge Switch ${this.store.data.id}`,
-        type: "edgeswitch",
+        name: `Mouse Roam ${this.store.data.id}`,
+        type: "mouseroam",
         port: this.apiPort,
         txt: {
           id: this.store.data.id,
@@ -84,7 +84,7 @@ class Peers extends EventEmitter {
           platform: process.platform,
         },
       });
-      this.browser = this.bonjour.find({ type: "edgeswitch" }, (service) => {
+      this.browser = this.bonjour.find({ type: "mouseroam" }, (service) => {
         const id = service.txt?.id;
         const address = service.addresses?.find(localAddress);
         if (
@@ -218,7 +218,7 @@ class Peers extends EventEmitter {
         tls = certFingerprint(req.socket);
       if (req.method !== "POST" || !localAddress(address) || !tls)
         return send(403, {
-          error: "Local pairing requires the Edge Switch app.",
+          error: "Local pairing requires the Mouse Roam app.",
         });
       let raw = "";
       for await (const chunk of req) {

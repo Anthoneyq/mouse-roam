@@ -1,6 +1,6 @@
 # Credits and source
 
-The input engine is [Lan Mouse](https://github.com/feschber/lan-mouse), copyright its contributors, under GPL-3.0-or-later. Edge Switch does not claim authorship of that engine.
+The input engine is [Lan Mouse](https://github.com/feschber/lan-mouse), copyright its contributors, under GPL-3.0-or-later. Mouse Roam does not claim authorship of that engine.
 
 Pinned upstream revision: `7441c081b2276917bad1f04130c9e4fab091a4f6`.
 

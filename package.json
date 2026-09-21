@@ -1,8 +1,28 @@
 {
-  "name": "edge-switch",
-  "productName": "Edge Switch",
+  "name": "mouse-roam",
+  "productName": "Mouse Roam",
   "version": "0.1.0",
-  "description": "Move your mouse to switch computers and screens.",
+  "description": "One keyboard and mouse for multiple local computers: Mac, Windows, Linux and Omarchy. A software KVM with optional capture-card screen switching.",
+  "keywords": [
+    "software-kvm",
+    "kvm-switch",
+    "keyboard-mouse-sharing",
+    "share-mouse-and-keyboard",
+    "synergy-alternative",
+    "deskflow-alternative",
+    "lan-mouse",
+    "capture-card",
+    "omarchy",
+    "hyprland",
+    "macos",
+    "windows",
+    "linux"
+  ],
+  "homepage": "https://github.com/Anthoneyq/mouse-roam",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Anthoneyq/mouse-roam.git"
+  },
   "author": "Anthoney",
   "license": "GPL-3.0-or-later",
   "main": "app/main.cjs",
@@ -25,7 +45,7 @@
     "prettier": "^3.9.8"
   },
   "build": {
-    "appId": "app.edgeswitch.desktop",
+    "appId": "app.mouseroam.desktop",
     "asar": true,
     "files": [
       "app/**",
@@ -77,7 +97,7 @@
         "AppImage"
       ],
       "category": "Utility",
-      "executableName": "edge-switch"
+      "executableName": "mouse-roam"
     }
   }
 }

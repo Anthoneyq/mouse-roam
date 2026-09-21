@@ -65,9 +65,9 @@ class Engine extends EventEmitter {
       windowsHide: true,
       env: {
         ...process.env,
-        EDGE_SWITCH_SOCKET: typeof endpoint === "string" ? endpoint : "",
-        EDGE_SWITCH_IPC_PORT: String(endpoint.port || ""),
-        EDGE_SWITCH_PEER_PIN: path.join(this.directory, "peer-fingerprint"),
+        MOUSE_ROAM_SOCKET: typeof endpoint === "string" ? endpoint : "",
+        MOUSE_ROAM_IPC_PORT: String(endpoint.port || ""),
+        MOUSE_ROAM_PEER_PIN: path.join(this.directory, "peer-fingerprint"),
         RUST_LOG: "info",
       },
       stdio: ["ignore", "ignore", "pipe"],
@@ -83,14 +83,14 @@ class Engine extends EventEmitter {
       if (!this.stopping)
         this.emit(
           "fault",
-          "The input service stopped. Reopen Edge Switch to reconnect.",
+          "The input service stopped. Reopen Mouse Roam to reconnect.",
         );
       this.emit("state", this.state);
     });
     for (let i = 0; i < 60; i++) {
       if (this.child.exitCode !== null)
         throw new Error(
-          "The input service could not start. Check that another Edge Switch is not already open.",
+          "The input service could not start. Check that another Mouse Roam is not already open.",
         );
       try {
         this.socket = await connect(endpoint);

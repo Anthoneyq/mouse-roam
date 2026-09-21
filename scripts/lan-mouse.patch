@@ -24,7 +24,7 @@ index 17e9799..7b46bdb 100644
  
  #[cfg(all(unix, not(target_os = "macos")))]
  pub fn default_socket_path() -> Result<PathBuf, SocketPathError> {
-+    if let Ok(path) = env::var("EDGE_SWITCH_SOCKET") { return Ok(PathBuf::from(path)); }
++    if let Ok(path) = env::var("MOUSE_ROAM_SOCKET") { return Ok(PathBuf::from(path)); }
      let xdg_runtime_dir =
          env::var("XDG_RUNTIME_DIR").map_err(SocketPathError::XdgRuntimeDirNotFound)?;
      Ok(Path::new(xdg_runtime_dir.as_str()).join(LAN_MOUSE_SOCKET_NAME))
@@ -32,7 +32,7 @@ index 17e9799..7b46bdb 100644
  
  #[cfg(all(unix, target_os = "macos"))]
  pub fn default_socket_path() -> Result<PathBuf, SocketPathError> {
-+    if let Ok(path) = env::var("EDGE_SWITCH_SOCKET") { return Ok(PathBuf::from(path)); }
++    if let Ok(path) = env::var("MOUSE_ROAM_SOCKET") { return Ok(PathBuf::from(path)); }
      let home = env::var("HOME").map_err(SocketPathError::HomeDirNotFound)?;
      Ok(Path::new(home.as_str())
          .join("Library")
@@ -45,7 +45,7 @@ index 8e26089..93eab8a 100644
  
          #[cfg(windows)]
 -        let listener = match TcpListener::bind("127.0.0.1:5252").await {
-+        let listener = match TcpListener::bind(format!("127.0.0.1:{}", std::env::var("EDGE_SWITCH_IPC_PORT").unwrap_or_else(|_| "5252".into()))).await {
++        let listener = match TcpListener::bind(format!("127.0.0.1:{}", std::env::var("MOUSE_ROAM_IPC_PORT").unwrap_or_else(|_| "5252".into()))).await {
              Ok(ls) => ls,
              // some other lan-mouse instance has bound the socket in the meantime
              Err(e) if e.kind() == ErrorKind::AddrInUse => {
@@ -117,7 +117,7 @@ index 417d913..cb02f2c 100644
          result = DTLSConn::new(conn, config, true, None) => match result {
 -            Ok(dtls_conn) => Ok((Arc::new(dtls_conn), addr)),
 +            Ok(dtls_conn) => {
-+                let expected = std::env::var("EDGE_SWITCH_PEER_PIN")
++                let expected = std::env::var("MOUSE_ROAM_PEER_PIN")
 +                    .ok().and_then(|path| std::fs::read_to_string(path).ok());
 +                let certs = dtls_conn.connection_state().await.peer_certificates;
 +                let actual = certs.first().map(|cert| crate::crypto::generate_fingerprint(cert));

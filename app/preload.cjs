@@ -1,6 +1,6 @@
 "use strict";
 const { contextBridge, ipcRenderer } = require("electron");
-contextBridge.exposeInMainWorld("edgeSwitch", {
+contextBridge.exposeInMainWorld("mouseRoam", {
   state: () => ipcRenderer.invoke("state"),
   save: (preferences) => ipcRenderer.invoke("save", preferences),
   pair: (id) => ipcRenderer.invoke("pair", id),

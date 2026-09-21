@@ -34,10 +34,10 @@ jobs:
       - name: Preserve Linux launch permissions
         if: runner.os == 'Linux'
         shell: bash
-        run: zip -j dist/Edge-Switch-Omarchy-x64.zip dist/*.AppImage
+        run: zip -j dist/Mouse-Roam-Omarchy-x64.zip dist/*.AppImage
       - uses: actions/upload-artifact@v4
         with:
-          name: edge-switch-${{ matrix.os }}
+          name: mouse-roam-${{ matrix.os }}
           path: |
             dist/*.exe
             dist/*.dmg
