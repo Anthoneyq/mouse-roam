@@ -256,7 +256,7 @@ class Peers extends EventEmitter {
         )
           return send(409, {
             error:
-              "Choose “Use this keyboard and mouse” on one computer and “Control this computer” on the other.",
+              "Choose “Main computer (server)” on the computer whose keyboard and mouse you’ll use. Choose “Other computer” on the second computer.",
           });
         this.pending = {
           direction: "incoming",

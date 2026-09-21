@@ -16,7 +16,9 @@ Already have a separate screen for each computer? You can turn off the capture-c
 
 ## The setup
 
-1. **Open Edge Switch on both computers.** Choose which keyboard and mouse you want to use.
+**The main computer is the server. It’s the computer whose keyboard and mouse you’ll use.** It can run Windows, Mac, or Omarchy.
+
+1. **Open Edge Switch on both computers.** On your main computer, choose **Main computer (server)**. On the second computer, choose **Other computer**.
 2. **Connect the computers.** Choose the nearby computer, then check that both screens show the same pairing code.
 3. **Choose your picture and screen edge.** If you’re using a capture card, select it and check the picture.
 

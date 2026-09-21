@@ -33,6 +33,12 @@ function prefs() {
 }
 function updateForm() {
   const main = prefs().role === "main";
+  $("local-role").textContent = main
+    ? "Main computer (server)"
+    : "Other computer";
+  $("peer-role").textContent = main
+    ? "Other computer"
+    : "Main computer (server)";
   $("video-step").hidden = !main;
   $("capture-options").hidden = !$("video-enabled").checked;
 }
@@ -71,7 +77,7 @@ function render(s) {
         ? "⊞"
         : "◈"
     : "+";
-  $("peer-name").textContent = s.peer?.name || "Your other computer";
+  $("peer-name").textContent = s.peer?.name || "Not connected yet";
   $("connection-label").textContent = s.network.online
     ? s.paused
       ? "Connected · paused"

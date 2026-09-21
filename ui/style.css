@@ -430,3 +430,17 @@ body.video {
     flex-wrap: wrap;
   }
 }
+.computer small {
+  display: block;
+  margin-top: 5px;
+  font-size: 10px;
+  font-weight: 400;
+  color: var(--muted);
+}
+.role-explanation {
+  max-width: 520px;
+  margin: 2px 0 14px;
+}
+.role-explanation strong {
+  color: var(--green);
+}

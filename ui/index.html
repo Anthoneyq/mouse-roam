@@ -28,7 +28,8 @@
       <section class="workspace" aria-label="Your connection">
         <div class="computer">
           <div class="screen"><span id="local-icon">⌘</span></div>
-          <span>This computer</span>
+          <span id="local-role">Main computer (server)</span>
+          <small>This computer</small>
         </div>
         <div class="bridge">
           <span class="bridge-line">········→········</span
@@ -36,7 +37,8 @@
         </div>
         <div class="computer">
           <div class="screen other"><span id="remote-icon">+</span></div>
-          <span id="peer-name">Your other computer</span>
+          <span id="peer-role">Other computer</span>
+          <small id="peer-name">Not connected yet</small>
         </div>
       </section>
       <section id="pairing" class="pairing" hidden aria-label="Confirm pairing">
@@ -56,20 +58,24 @@
         <article class="step">
           <div class="step-number">1</div>
           <div class="step-body">
-            <h2>Choose how you’ll use this computer</h2>
+            <h2>Which computer is this?</h2>
+            <p class="role-explanation">
+              <strong>The main computer is the server.</strong> It’s the
+              computer whose keyboard and mouse you’ll use.
+            </p>
             <div class="role-options">
               <label class="choice"
                 ><input type="radio" name="role" value="main" checked /><span
-                  ><strong>Use this keyboard and mouse</strong
+                  ><strong>Main computer (server)</strong
                   ><small
-                    >I’ll switch from here to the other computer.</small
+                    >I’ll use this computer’s keyboard and mouse.</small
                   ></span
                 ></label
               ><label class="choice"
                 ><input type="radio" name="role" value="other" /><span
-                  ><strong>Control this computer</strong
+                  ><strong>Other computer</strong
                   ><small
-                    >I’ll use the other computer’s keyboard and mouse.</small
+                    >I’ll control this one from my main computer.</small
                   ></span
                 ></label
               >

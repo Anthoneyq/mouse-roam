@@ -39,10 +39,12 @@ const assert = require("node:assert/strict");
       path: path.join(output, "setup.png"),
       fullPage: true,
     });
-    await page.getByLabel("Control this computer", { exact: false }).check();
+    await page
+      .getByRole("radio", { name: "Other computer", exact: false })
+      .check();
     assert.equal(await page.locator("#video-step").isHidden(), true);
     await page
-      .getByLabel("Use this keyboard and mouse", { exact: false })
+      .getByRole("radio", { name: "Main computer (server)", exact: false })
       .check();
     assert.equal(await page.locator("#video-step").isVisible(), true);
     await page.locator("#video-enabled").uncheck();
