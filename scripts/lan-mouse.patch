@@ -1,5 +1,5 @@
 diff --git a/lan-mouse-ipc/src/lib.rs b/lan-mouse-ipc/src/lib.rs
-index 17e9799..748bd20 100644
+index 17e9799..7b46bdb 100644
 --- a/lan-mouse-ipc/src/lib.rs
 +++ b/lan-mouse-ipc/src/lib.rs
 @@ -186,6 +186,8 @@ pub struct ClientState {
@@ -11,15 +11,16 @@ index 17e9799..748bd20 100644
      /// a client was created
      Created(ClientHandle, ClientConfig, ClientState),
      /// no such client
-@@ -227,6 +229,7 @@ pub enum FrontendEvent {
+@@ -227,6 +229,8 @@ pub enum FrontendEvent {
  
  #[derive(Debug, Eq, PartialEq, Clone, Serialize, Deserialize)]
  pub enum FrontendRequest {
 +    ReleaseInput,
++    SetInputEnabled(bool),
      /// activate/deactivate client
      Activate(ClientHandle, bool),
      /// add a new client
-@@ -292,6 +295,7 @@ pub enum SocketPathError {
+@@ -292,6 +296,7 @@ pub enum SocketPathError {
  
  #[cfg(all(unix, not(target_os = "macos")))]
  pub fn default_socket_path() -> Result<PathBuf, SocketPathError> {
@@ -27,7 +28,7 @@ index 17e9799..748bd20 100644
      let xdg_runtime_dir =
          env::var("XDG_RUNTIME_DIR").map_err(SocketPathError::XdgRuntimeDirNotFound)?;
      Ok(Path::new(xdg_runtime_dir.as_str()).join(LAN_MOUSE_SOCKET_NAME))
-@@ -299,6 +303,7 @@ pub fn default_socket_path() -> Result<PathBuf, SocketPathError> {
+@@ -299,6 +304,7 @@ pub fn default_socket_path() -> Result<PathBuf, SocketPathError> {
  
  #[cfg(all(unix, target_os = "macos"))]
  pub fn default_socket_path() -> Result<PathBuf, SocketPathError> {
@@ -106,19 +107,111 @@ index f876b6d..ab3278e 100644
          if self.config_toml.is_none() {
              self.config_toml = Some(Default::default());
          }
+diff --git a/src/emulation.rs b/src/emulation.rs
+index 923bf99..e1d315a 100644
+--- a/src/emulation.rs
++++ b/src/emulation.rs
+@@ -67,6 +67,7 @@ pub(crate) enum EmulationEvent {
+ }
+ 
+ enum EmulationRequest {
++    SetEnabled(bool),
+     Reenable,
+     Release(SocketAddr),
+     ChangePort(u16),
+@@ -101,6 +102,10 @@ impl Emulation {
+             .expect("channel closed");
+     }
+ 
++    pub(crate) fn set_enabled(&self, enabled: bool) {
++        let _ = self.request_tx.send(EmulationRequest::SetEnabled(enabled));
++    }
++
+     pub(crate) fn reenable(&self) {
+         self.request_tx
+             .send(EmulationRequest::Reenable)
+@@ -139,6 +144,7 @@ struct ListenTask {
+ impl ListenTask {
+     async fn run(mut self) {
+         let mut interval = tokio::time::interval(Duration::from_secs(5));
++        let mut enabled = false;
+         let mut last_response = HashMap::new();
+         let mut rejected_connections = HashMap::new();
+         loop {
+@@ -146,6 +152,10 @@ impl ListenTask {
+                 e = self.listener.next() => {match e {
+                     Some(ListenEvent::Msg { event, addr }) => {
+                         log::trace!("{event} <-<-<-<-<- {addr}");
++                        if !enabled {
++                            self.listener.reply(addr, ProtoEvent::Leave(0)).await;
++                            continue;
++                        }
+                         last_response.insert(addr, Instant::now());
+                         match event {
+                             ProtoEvent::Enter(pos) => {
+@@ -195,6 +205,16 @@ impl ListenTask {
+                     self.event_tx.send(event).expect("channel closed");
+                 }
+                 request = self.request_rx.recv() => match request.expect("channel closed") {
++                    EmulationRequest::SetEnabled(value) => {
++                        enabled = value;
++                        if !enabled {
++                            for (&addr, _) in last_response.iter() {
++                                self.emulation_proxy.remove(addr);
++                                self.listener.reply(addr, ProtoEvent::Leave(0)).await;
++                            }
++                            last_response.clear();
++                        }
++                    },
+                     // reenable emulation
+                     EmulationRequest::Reenable => self.emulation_proxy.reenable(),
+                     // notify the other end that we hit a barrier (should release capture)
+diff --git a/src/listen.rs b/src/listen.rs
+index e0a9475..ce7ab81 100644
+--- a/src/listen.rs
++++ b/src/listen.rs
+@@ -134,8 +134,8 @@ impl LanMouseListener {
+                                 let certs = dtls_conn.connection_state().await.peer_certificates;
+                                 let cert = certs.first().expect("cert");
+                                 let fingerprint = crypto::generate_fingerprint(cert);
+-                                listen_tx.send(ListenEvent::Accept { addr, fingerprint }).expect("channel closed");
+-                                spawn_local(read_loop(conns_clone.clone(), addr, conn, listen_tx.clone()));
++                                listen_tx.send(ListenEvent::Accept { addr, fingerprint: fingerprint.clone() }).expect("channel closed");
++                                spawn_local(read_loop(conns_clone.clone(), addr, conn, listen_tx.clone(), authorized_keys.clone(), fingerprint));
+                             },
+                             Err(e) => {
+                                 if let Error::Std(ref e) = e {
+@@ -250,10 +250,16 @@ async fn read_loop(
+     addr: SocketAddr,
+     conn: ArcConn,
+     dtls_tx: Sender<ListenEvent>,
++    authorized: Arc<RwLock<HashMap<String, String>>>,
++    fingerprint: String,
+ ) -> Result<(), Error> {
+     let mut b = [0u8; MAX_EVENT_SIZE];
+ 
+     while conn.recv(&mut b).await.is_ok() {
++        if !authorized.read().expect("lock").contains_key(&fingerprint) {
++            let _ = conn.close().await;
++            break;
++        }
+         match b.try_into() {
+             Ok(event) => dtls_tx
+                 .send(ListenEvent::Msg { event, addr })
 diff --git a/src/service.rs b/src/service.rs
-index bf782c7..31e1a70 100644
+index bf782c7..53c62cf 100644
 --- a/src/service.rs
 +++ b/src/service.rs
-@@ -169,6 +169,7 @@ impl Service {
+@@ -169,6 +169,8 @@ impl Service {
              Err(e) => return log::error!("error receiving request: {e}"),
          };
          match request {
 +            FrontendRequest::ReleaseInput => self.capture.release(),
++            FrontendRequest::SetInputEnabled(enabled) => self.emulation.set_enabled(enabled),
              FrontendRequest::Activate(handle, active) => {
                  self.set_client_active(handle, active);
                  self.save_config();
-@@ -332,6 +333,8 @@ impl Service {
+@@ -332,6 +334,8 @@ impl Service {
  
      fn handle_capture_event(&mut self, event: ICaptureEvent) {
          match event {

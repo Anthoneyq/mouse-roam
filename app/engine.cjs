@@ -146,6 +146,7 @@ class Engine extends EventEmitter {
   }
   async configure(peer, preferences) {
     this.release();
+    this.request({ SetInputEnabled: true });
     for (const [id] of this.clients) this.request({ Delete: id });
     this.clients = [];
     if (preferences.role !== "main") return;
@@ -171,6 +172,7 @@ class Engine extends EventEmitter {
   }
   pause() {
     this.release();
+    if (this.state.running) this.request({ SetInputEnabled: false });
     if (this.state.running)
       for (const [id] of this.clients) this.request({ Activate: [id, false] });
   }

@@ -5,6 +5,7 @@ let current,
   initialized = false,
   busy = false,
   stream,
+  lastVideo,
   videoVersion = 0;
 const overlay = new URLSearchParams(location.search).get("view") === "video";
 if (overlay) {
@@ -190,6 +191,7 @@ async function findCamera() {
 }
 async function video(value) {
   if (!overlay) return;
+  lastVideo = value;
   const version = ++videoVersion;
   stream?.getTracks().forEach((track) => track.stop());
   stream = null;
@@ -219,6 +221,7 @@ async function video(value) {
     $("video-error").hidden = true;
     api.cameraReady(true);
     stream.getVideoTracks()[0].addEventListener("ended", () => {
+      stream = null;
       api.cameraReady(false);
       $("video-error").hidden = false;
       $("video-error").textContent = "Capture card disconnected.";
@@ -230,6 +233,10 @@ async function video(value) {
   }
 }
 if (api) {
+  if (overlay)
+    navigator.mediaDevices.addEventListener("devicechange", () => {
+      if (!stream && lastVideo?.enabled && lastVideo.camera) video(lastVideo);
+    });
   api.onState(render);
   api.onVideo(video);
   call("state")

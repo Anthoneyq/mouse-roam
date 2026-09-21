@@ -281,11 +281,9 @@ function setLogin(enabled) {
   } else if (fs.existsSync(file)) fs.unlinkSync(file);
 }
 function createTray() {
-  const svg =
-    '<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22"><rect x="2" y="4" width="11" height="13" rx="2" fill="none" stroke="black" stroke-width="2"/><path d="M9 10h11m-4-4 4 4-4 4" fill="none" stroke="black" stroke-width="2"/></svg>';
-  const icon = nativeImage.createFromDataURL(
-    "data:image/svg+xml;base64," + Buffer.from(svg).toString("base64"),
-  );
+  const icon = nativeImage
+    .createFromPath(path.join(__dirname, "..", "assets", "trayTemplate.png"))
+    .resize({ width: 22, height: 22 });
   icon.setTemplateImage(true);
   tray = new Tray(icon);
   tray.setToolTip("Edge Switch");
@@ -359,7 +357,13 @@ app.whenReady().then(async () => {
       process.platform === "win32" ? "lan-mouse.exe" : "lan-mouse",
     );
     engine = new Engine(store.directory, binary);
-    engine.on("state", broadcast);
+    let permissionsReady = false;
+    engine.on("state", () => {
+      const ready = engine.state.capture && engine.state.emulation;
+      if (ready && !permissionsReady) setImmediate(configure);
+      permissionsReady = ready;
+      broadcast();
+    });
     engine.on("fault", (message) => {
       paused = true;
       hideViewer();
