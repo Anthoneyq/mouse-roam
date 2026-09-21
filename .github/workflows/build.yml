@@ -31,6 +31,10 @@ jobs:
       - name: Preserve corresponding engine source
         shell: bash
         run: tar --exclude=.git --exclude=target -czf dist/lan-mouse-corresponding-source.tar.gz -C .cache lan-mouse
+      - name: Preserve Linux launch permissions
+        if: runner.os == 'Linux'
+        shell: bash
+        run: zip -j dist/Edge-Switch-Omarchy-x64.zip dist/*.AppImage
       - uses: actions/upload-artifact@v4
         with:
           name: edge-switch-${{ matrix.os }}
