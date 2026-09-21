@@ -37,6 +37,17 @@ class Engine extends EventEmitter {
         'port = 4243\nrelease_bind = ["KeyLeftCtrl", "KeyLeftAlt", "KeyLeftShift"]\n',
         { mode: 0o600 },
       );
+    // Saved edges must not activate before the app has checked the peer and video.
+    fs.writeFileSync(
+      config,
+      fs
+        .readFileSync(config, "utf8")
+        .replace(
+          /activate_on_startup\s*=\s*true/g,
+          "activate_on_startup = false",
+        ),
+      { mode: 0o600 },
+    );
     const endpoint =
       process.platform === "win32"
         ? { host: "127.0.0.1", port: await freePort() }
@@ -56,6 +67,7 @@ class Engine extends EventEmitter {
         ...process.env,
         EDGE_SWITCH_SOCKET: typeof endpoint === "string" ? endpoint : "",
         EDGE_SWITCH_IPC_PORT: String(endpoint.port || ""),
+        EDGE_SWITCH_PEER_PIN: path.join(this.directory, "peer-fingerprint"),
         RUST_LOG: "info",
       },
       stdio: ["ignore", "ignore", "pipe"],
@@ -146,6 +158,11 @@ class Engine extends EventEmitter {
   }
   async configure(peer, preferences) {
     this.release();
+    fs.writeFileSync(
+      path.join(this.directory, "peer-fingerprint"),
+      peer.input || "",
+      { mode: 0o600 },
+    );
     this.request({ SetInputEnabled: true });
     for (const [id] of this.clients) this.request({ Delete: id });
     this.clients = [];
@@ -178,6 +195,9 @@ class Engine extends EventEmitter {
   }
   forget(peer) {
     this.pause();
+    fs.writeFileSync(path.join(this.directory, "peer-fingerprint"), "", {
+      mode: 0o600,
+    });
     if (this.state.running && peer)
       this.request({ RemoveAuthorizedKey: peer.input });
     for (const [id] of this.clients)

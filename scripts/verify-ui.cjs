@@ -7,11 +7,25 @@ const assert = require("node:assert/strict");
   const output = path.join(__dirname, "..", "test-results");
   fs.mkdirSync(output, { recursive: true });
   const application = await electron.launch({
-    args: [path.join(__dirname, ".."), "--preview"],
+    ...(process.env.EDGE_SWITCH_APP
+      ? { executablePath: process.env.EDGE_SWITCH_APP }
+      : {}),
+    args: process.env.EDGE_SWITCH_APP
+      ? ["--preview"]
+      : [path.join(__dirname, ".."), "--preview"],
     timeout: 30000,
   });
   try {
-    const page = await application.firstWindow();
+    await application.firstWindow();
+    let page;
+    for (let attempt = 0; attempt < 100; attempt++) {
+      page = application
+        .windows()
+        .find((candidate) => candidate.url().includes("view=setup"));
+      if (page) break;
+      await new Promise((resolve) => setTimeout(resolve, 50));
+    }
+    if (!page) throw new Error("Setup window did not open.");
     await page.waitForSelector("h1");
     await page.waitForFunction(() =>
       document.querySelector("#notice").textContent.includes("Design preview"),

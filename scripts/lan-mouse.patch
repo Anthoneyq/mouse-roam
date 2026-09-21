@@ -107,6 +107,29 @@ index f876b6d..ab3278e 100644
          if self.config_toml.is_none() {
              self.config_toml = Some(Default::default());
          }
+diff --git a/src/connect.rs b/src/connect.rs
+index 417d913..cb02f2c 100644
+--- a/src/connect.rs
++++ b/src/connect.rs
+@@ -65,7 +65,17 @@ async fn connect(
+     tokio::select! {
+         _ = timeout => Err((addr, LanMouseConnectionError::Timeout)),
+         result = DTLSConn::new(conn, config, true, None) => match result {
+-            Ok(dtls_conn) => Ok((Arc::new(dtls_conn), addr)),
++            Ok(dtls_conn) => {
++                let expected = std::env::var("EDGE_SWITCH_PEER_PIN")
++                    .ok().and_then(|path| std::fs::read_to_string(path).ok());
++                let certs = dtls_conn.connection_state().await.peer_certificates;
++                let actual = certs.first().map(|cert| crate::crypto::generate_fingerprint(cert));
++                if expected.as_deref().map(str::trim) != actual.as_deref() || actual.is_none() {
++                    let _ = dtls_conn.close().await;
++                    return Err((addr, LanMouseConnectionError::Dtls(webrtc_dtls::Error::ErrVerifyDataMismatch)));
++                }
++                Ok((Arc::new(dtls_conn), addr))
++            },
+             Err(e) => Err((addr, e.into())),
+         }
+     }
 diff --git a/src/emulation.rs b/src/emulation.rs
 index 923bf99..e1d315a 100644
 --- a/src/emulation.rs
